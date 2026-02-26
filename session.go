@@ -925,19 +925,22 @@ func (s *session) run() {
 
 	for !s.Stopped() {
 		select {
-
-		case msg := <-s.admin:
-			s.onAdmin(msg)
-
-		case <-s.messageEvent:
-			s.SendAppMessages(s)
-
 		case fixIn, ok := <-s.messageIn:
 			if !ok {
 				s.Disconnected(s)
 			} else {
 				s.Incoming(s, fixIn)
 			}
+		default:
+		}
+
+		select {
+
+		case msg := <-s.admin:
+			s.onAdmin(msg)
+
+		case <-s.messageEvent:
+			s.SendAppMessages(s)
 
 		case evt := <-s.sessionEvent:
 			s.Timeout(s, evt)
