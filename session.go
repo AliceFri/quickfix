@@ -923,15 +923,21 @@ func (s *session) run() {
 		ticker.Stop()
 	}()
 
+	messageEventCount := 0
 	for !s.Stopped() {
-		select {
-		case fixIn, ok := <-s.messageIn:
-			if !ok {
-				s.Disconnected(s)
-			} else {
-				s.Incoming(s, fixIn)
+		if messageEventCount < 20 {
+			messageEventCount += 1
+			select {
+			case fixIn, ok := <-s.messageIn:
+				if !ok {
+					s.Disconnected(s)
+				} else {
+					s.Incoming(s, fixIn)
+				}
+			case msg := <-s.admin:
+				s.onAdmin(msg)
+			default:
 			}
-		default:
 		}
 
 		select {
@@ -942,6 +948,13 @@ func (s *session) run() {
 		case <-s.messageEvent:
 			s.SendAppMessages(s)
 
+		case fixIn, ok := <-s.messageIn:
+			if !ok {
+				s.Disconnected(s)
+			} else {
+				s.Incoming(s, fixIn)
+			}
+
 		case evt := <-s.sessionEvent:
 			s.Timeout(s, evt)
 
@@ -949,5 +962,6 @@ func (s *session) run() {
 			s.CheckSessionTime(s, now)
 			s.CheckResetTime(s, now)
 		}
+		messageEventCount = 0
 	}
 }
