@@ -925,7 +925,7 @@ func (s *session) run() {
 
 	messageEventCount := 0
 	for !s.Stopped() {
-		if messageEventCount < 20 {
+		if messageEventCount < 50 {
 			messageEventCount += 1
 			select {
 			case fixIn, ok := <-s.messageIn:
@@ -936,8 +936,14 @@ func (s *session) run() {
 				}
 			case msg := <-s.admin:
 				s.onAdmin(msg)
+			case evt := <-s.sessionEvent:
+				s.Timeout(s, evt)
+			case now := <-ticker.C:
+				s.CheckSessionTime(s, now)
+				s.CheckResetTime(s, now)
 			default:
 			}
+			continue
 		}
 
 		select {
