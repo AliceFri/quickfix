@@ -923,28 +923,30 @@ func (s *session) run() {
 		ticker.Stop()
 	}()
 
-	messageEventCount := 0
+	go s.run1()
+
+	//messageEventCount := 0
 	for !s.Stopped() {
-		if messageEventCount < 50 {
-			messageEventCount += 1
-			select {
-			case fixIn, ok := <-s.messageIn:
-				if !ok {
-					s.Disconnected(s)
-				} else {
-					s.Incoming(s, fixIn)
-				}
-			case msg := <-s.admin:
-				s.onAdmin(msg)
-			case evt := <-s.sessionEvent:
-				s.Timeout(s, evt)
-			case now := <-ticker.C:
-				s.CheckSessionTime(s, now)
-				s.CheckResetTime(s, now)
-			default:
-			}
-			continue
-		}
+		//if messageEventCount < 50 {
+		//	messageEventCount += 1
+		//	select {
+		//	case fixIn, ok := <-s.messageIn:
+		//		if !ok {
+		//			s.Disconnected(s)
+		//		} else {
+		//			s.Incoming(s, fixIn)
+		//		}
+		//	case msg := <-s.admin:
+		//		s.onAdmin(msg)
+		//	case evt := <-s.sessionEvent:
+		//		s.Timeout(s, evt)
+		//	case now := <-ticker.C:
+		//		s.CheckSessionTime(s, now)
+		//		s.CheckResetTime(s, now)
+		//	default:
+		//	}
+		//	continue
+		//}
 
 		select {
 
@@ -968,6 +970,19 @@ func (s *session) run() {
 			s.CheckSessionTime(s, now)
 			s.CheckResetTime(s, now)
 		}
-		messageEventCount = 0
+		//messageEventCount = 0
+	}
+}
+
+func (s *session) run1() {
+	for !s.Stopped() {
+		select {
+		case fixIn, ok := <-s.messageIn:
+			if !ok {
+				s.Disconnected(s)
+			} else {
+				s.Incoming(s, fixIn)
+			}
+		}
 	}
 }
